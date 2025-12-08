@@ -1,26 +1,24 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-from datetime import datetime
 
-# ====================== CONFIG ======================
+# ====================== PAGE CONFIG ======================
 st.set_page_config(
-    page_title="ABC School - Result Dashboard 2025",
+    page_title="ABC School • Result Dashboard 2025",
     page_icon="trophy",
     layout="wide"
 )
 
-# Custom CSS
+# ====================== CUSTOM CSS ======================
 st.markdown("""
 <style>
-    .big-font {font-size: 50px !important; font-weight: bold; text-align: center; color: #1e3d59;}
-    .metric-card {background: linear-gradient(90deg, #667eea, #764ba2); padding: 20px; border-radius: 15px; color: white;}
-    .topper-card {background: #fff3e0; padding: 15px; border-radius: 12px; border-left: 6px solid #ff9800;}
-    .stTabs [data-baseweb="tab"] {font-size: 18px; font-weight: bold;}
+    .big-font {font-size: 50px !important; font-weight: bold; text-align: center; color: #1e3d59; margin-bottom:0;}
+    .sub-font {font-size: 24px; text-align: center; color: #f47b20; margin-top:0;}
+    .metric-card {background: linear-gradient(90deg, #667eea, #764ba2); padding: 20px; border-radius: 15px; color: white; text-align:center;}
+    .topper-card {background: #fff8e1; padding: 18px; border-radius: 12px; border-left: 8px solid #ff9800; margin:10px 0;}
 </style>
 """, unsafe_allow_html=True)
 
-# ====================== DATA ======================
+# ====================== LOAD DATA ======================
 @st.cache_data
 def load_results():
     data = {
@@ -40,7 +38,7 @@ def load_results():
     }
     df = pd.DataFrame(data)
     df["Total"] = df[["Maths","Science","English","Social","Hindi"]].sum(axis=1)
-    df["Percentage"] = df["Total"] / 5
+    df["Percentage"] = round(df["Total"] / 5, 2)
     df = df.sort_values("Percentage", ascending=False).reset_index(drop=True)
     df["Rank"] = df.index + 1
     return df
@@ -49,65 +47,60 @@ df = load_results()
 
 # ====================== SIDEBAR ======================
 with st.sidebar:
-    st.image("https://img.icons8.com/fluency/96/000000/trophy.png", width=100)
+    st.image("https://img.icons8.com/fluency/96/trophy.png", width=100)
     st.title("ABC International School")
-    st.markdown("### Annual Exam Results 2025")
+    st.markdown("### Annual Results 2025")
     st.markdown("---")
-    st.info("View overall performance or check your personal rank card below")
+    st.info("Public dashboard + secure personal rank card")
 
-# ====================== MAIN DASHBOARD ======================
-st.markdown("<p class='big-font'>Result Dashboard 2025</p>", unsafe_allow_html=True)
+# ====================== HEADER ======================
+st.markdown('<p class="big-font">Result Dashboard 2025</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-font">Class 10th • Annual Examination</p>', unsafe_allow_html=True)
 
+# ====================== TABS ======================
 tab1, tab2, tab3 = st.tabs(["Overall Performance", "Toppers List", "My Rank Card"])
 
+# ------------------- TAB 1 -------------------
 with tab1:
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Students", len(df))
-    with col2:
-        st.metric("Class Average", f"{df['Percentage'].mean():.2f}%")
-    with col3:
-        st.metric("Highest Score", f"{df['Percentage'].max():.2f}%")
-    with col4:
-        st.metric("Pass % (above 33%)", f"{(df['Percentage'] >= 33).mean()*100:.1f}%")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Total Students", len(df))
+    c2.metric("Class Average", f"{df['Percentage'].mean():.2f}%")
+    c3.metric("Highest %", f"{df['Percentage'].max():.2f}%")
+    c4.metric("Pass Rate", f"{(df['Percentage'] >= 33).mean()*100:.1f}%")
 
-    col_a, col_b = st.columns(2)
-    with col_a:
-        fig = px.bar(df.head(10), x="Name", y="Percentage", title="Top 10 Students",
-                     color="Percentage", color_continuous_scale="Viridis")
-        st.plotly_chart(fig, use_container_width=True)
+    st.markdown("### Top 10 Students – Percentage")
+    top10_chart = df.head(10)[["Name", "Percentage"]].set_index("Name")
+    st.bar_chart(top10_chart, use_container_width=True, height=400)
 
-    with col_b:
-        subject_avg = df[["Maths","Science","English","Social","Hindi"]].mean()
-        fig2 = px.pie(values=subject_avg.values, names=subject_avg.index,
-                      title="Average Marks by Subject", color_discrete_sequence=px.colors.sequential.Plasma)
-        st.plotly_chart(fig2, use_container_width=True)
+    st.markdown("### Subject-wise Average Marks")
+    subject_avg = df[["Maths","Science","English","Social","Hindi"]].mean().round(1)
+    st.bar_chart(subject_avg, use_container_width=True, height=350)
 
+# ------------------- TAB 2 -------------------
 with tab2:
-    st.markdown("### Top 10 Students - 2025")
-    top10 = df.head(10)[["Rank","Roll No","Name","Total","Percentage"]]
-    top10["Percentage"] = top10["Percentage"].round(2)
-    st.dataframe(top10.style.background_gradient(cmap="Blues"), use_container_width=True)
+    st.markdown("### Top 10 Students")
+    display_df = df.head(10)[["Rank","Roll No","Name","Total","Percentage"]].copy()
+    display_df["Percentage"] = display_df["Percentage"].astype(str) + " %"
+    st.dataframe(display_df.style.background_gradient(cmap="Blues"), use_container_width=True)
 
     for _, row in df.head(5).iterrows():
-        with st.container():
-            st.markdown(f"""
-            <div class="topper-card">
-                <h3>trophy Rank {int(row['Rank'])}: {row['Name']}</h3>
-                <p><strong>Roll No:</strong> {row['Roll No']} | <strong>Total:</strong> {int(row['Total'])}/500 | 
-                   <strong>Percentage:</strong> {row['Percentage']:.2f}% badge</p>
-            </div><br>
-            """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="topper-card">
+            <h3>Rank {int(row['Rank'])} — {row['Name']}</h3>
+            <p><b>Roll No:</b> {row['Roll No']} | <b>Total:</b> {int(row['Total'])}/500 | <b>Percentage:</b> {row['Percentage']}%</p>
+        </div>
+        """, unsafe_allow_html=True)
 
+# ------------------- TAB 3 -------------------
 with tab3:
-    st.markdown("### Your Personal Rank Card")
-    c1, c2 = st.columns(2)
-    with c1:
-        roll = st.text_input("Enter Roll Number", placeholder="e.g., S1001")
-    with c2:
-        auth = st.text_input("Password or DOB (YYYY-MM-DD)", type="password", placeholder="e.g., aarav123")
+    st.markdown("### Enter Your Details to View Rank Card")
+    col1, col2 = st.columns(2)
+    with col1:
+        roll = st.text_input("Roll Number", placeholder="e.g. S1001")
+    with col2:
+        auth = st.text_input("Password or DOB (YYYY-MM-DD)", type="password")
 
-    if st.button("Generate My Rank Card", type="primary", use_container_width=True):
+    if st.button("Show My Rank Card", type="primary", use_container_width=True):
         if not roll or not auth:
             st.error("Please fill both fields")
         else:
@@ -115,44 +108,33 @@ with tab3:
             if student.empty:
                 st.error("Roll Number not found!")
             elif auth != student.iloc[0]["Password"] and auth != student.iloc[0]["DOB"]:
-                st.error("Incorrect Password or Date of Birth!")
+                st.error("Incorrect Password or Date of Birth")
             else:
                 s = student.iloc[0]
                 st.balloons()
-                st.success(f"Welcome back, {s['Name']}! Here is your result:")
-
-                # Beautiful Rank Card
                 st.markdown(f"""
-                <div style="background:linear-gradient(135deg,#667eea,#764ba2); padding:30px; border-radius:20px; color:white; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
-                    <h1>{s['Name']}</h1>
-                    <h3>Class: {s['Class']} | Roll No: {s['Roll No']}</h3>
-                    <h1 style="font-size:60px; color:#ffeb3b; text-shadow:2px 2px 10px black;">Rank {int(s['Rank'])}</h1>
-                    <h2>Total: {int(s['Total'])}/500 ({s['Percentage']:.2f}%)</h2>
+                <div style="background:linear-gradient(135deg,#667eea,#764ba2); padding:40px; border-radius:20px; color:white; text-align:center; box-shadow:0 15px 35px rgba(0,0,0,0.3); margin:20px 0;">
+                    <h1 style="margin:5px;">{s['Name']}</h1>
+                    <p style="font-size:20px; margin:5px;">Class {s['Class']} | Roll No: {s['Roll No']}</p>
+                    <h1 style="font-size:80px; color:#ffeb3b; text-shadow:3px 3px 10px black; margin:20px;">Rank {int(s['Rank'])}</h1>
+                    <h2>{int(s['Total'])} / 500  ({s['Percentage']}%)</h2>
                 </div>
                 """, unsafe_allow_html=True)
 
-                colx, coly, colz = st.columns(3)
-                colx.metric("Maths", f"{s['Maths']}/100")
-                coly.metric("Science", f"{s['Science']}/100")
-                colz.metric("English", f"{s['English']}/100")
-                cola, colb = st.columns(2)
-                cola.metric("Social Science", f"{s['Social']}/100")
-                colb.metric("Hindi", f"{s['Hindi']}/100")
+                cols = st.columns(5)
+                subjects = ["Maths","Science","English","Social","Hindi"]
+                for col, sub in zip(cols, subjects):
+                    col.metric(sub, f"{s[sub]}/100")
 
-                if s['Percentage'] >= 90:
-                    st.markdown("<h2 style='text-align:center; color:#4caf50;'>Grade: A1 - Outstanding! star</h2>", unsafe_allow_html=True)
-                elif s['Percentage'] >= 80:
-                    st.markdown("<h2 style='text-align:center; color:#8bc34a;'>Grade: A2 - Excellent! star</h2>", unsafe_allow_html=True)
+                grade = "A1" if s['Percentage']>=90 else "A2" if s['Percentage']>=80 else "B1" if s['Percentage']>=70 else "B2" if s['Percentage']>=60 else "C"
+                st.markdown(f"<h2 style='text-align:center; color:#4caf50;'>Grade: {grade}</h2>", unsafe_allow_html=True)
 
-                # PDF Download (simulated)
                 st.download_button(
-                    label="Download Rank Card as PDF",
-                    data=f"Rank Card\nName: {s['Name']}\nRank: {s['Rank']}\nPercentage: {s['Percentage']:.2f}%".encode(),
-                    file_name=f"RankCard_{s['Roll No']}.txt",
-                    mime="text/plain"
+                    "Download Rank Card (Save as PDF via Print)",
+                    data=f"Rank Card - {s['Name']}\nRank: {s['Rank']}\nPercentage: {s['Percentage']}%\nTotal: {s['Total']}/500",
+                    file_name=f"RankCard_{s['Roll No']}.txt"
                 )
-                st.info("Note: For real PDF, use browser print → Save as PDF")
 
-# Footer
+# ====================== FOOTER ======================
 st.markdown("---")
-st.markdown("<p style='text-align:center; color:#666;'>© 2025 ABC International School | Made with Streamlit</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#666;'>© 2025 ABC International School • Powered by Streamlit</p>", unsafe_allow_html=True)
