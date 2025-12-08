@@ -71,7 +71,7 @@ with tab1:
     with col4:
         st.metric("Pass % (above 33%)", f"{(df['Percentage'] >= 33).mean()*100:.1f}%")
 
-    col_a, col_b st.columns(2)
+    col_a, col_b = st.columns(2)
     with col_a:
         fig = px.bar(df.head(10), x="Name", y="Percentage", title="Top 10 Students",
                      color="Percentage", color_continuous_scale="Viridis")
