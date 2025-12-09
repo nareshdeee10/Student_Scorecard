@@ -38,61 +38,48 @@ with st.sidebar:
     st.title("ABC International School")
     st.markdown("### Academic Results 2024 - 2025")
     st.info("Public dashboard + secure personal rank card")
+
+# ... (Authentication, Functions, and Login Form sections remain the same) ...
+
+# Hide sidebar pages based on role if authenticated
+if st.session_state.authenticated:
     
-# --- Initialization ---
-if 'authenticated' not in st.session_state:
-    st.session_state.authenticated = False
-    st.session_state.role = None
-    st.session_state.username = None
-
-# --- Functions ---
-def authenticate(username, password):
-    if username in USERS and USERS[username]['password'] == password:
-        st.session_state.authenticated = True
-        st.session_state.role = USERS[username]['role']
-        st.session_state.username = username
-        st.success(f"Welcome, {username}!")
-    else:
-        st.error("Invalid username or password.")
-
-def logout():
-    st.session_state.authenticated = False
-    st.session_state.role = None
-    st.session_state.username = None
-    st.experimental_rerun() # Rerun to show the login page immediately
-
-def show_login_page():
-    st.title("🔐 Login Page")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        authenticate(username, password)
-
-def show_admin_page():
-    st.title("👑 Admin Dashboard")
-    st.write(f"Hello, **{st.session_state.username}**! You have **admin** privileges.")
-    st.button("Logout", on_click=logout)
-    st.info("Admin-only content goes here...")
-
-def show_regular_page():
-    st.title("👤 Regular User Portal")
-    st.write(f"Hello, **{st.session_state.username}**! You have **regular** privileges.")
-    st.button("Logout", on_click=logout)
-    st.info("Regular user content goes here...")
+    # Hide pages that don't match the user's role
+    st.markdown(
+        f"""
+        <style>
+        .css-1f9p674 {{  /* Target the element that holds the sidebar links */
+            display: {'none' if st.session_state.role != 'admin' else 'block'};
+        }}
+        .css-1f9p674:nth-child(2) {{ 
+            display: {'none' if st.session_state.role != 'student' else 'block'};
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     
-# --- Main App Logic ---
-if not st.session_state.authenticated:
-    show_login_page()
-else:
-    # Use st.sidebar for the logout button in a multi-page setup
+    # After a successful login, you can use a custom function to redirect/go to a specific page
     if st.session_state.role == "admin":
-        show_admin_page()
-    elif st.session_state.role == "regular":
-        show_regular_page()
-    else:
-        st.error("Unknown user role.")
-        logout()
+        st.experimental_set_query_params(page=["1_Admin_Dashboard"]) # For automatic redirection
+        st.info("Welcome Admin! Please use the sidebar to navigate.")
+    elif st.session_state.role == "student":
+        st.experimental_set_query_params(page=["2_Student_View"]) # For automatic redirection
+        st.info("Welcome Student! Please use the sidebar to navigate.")
+
+else:
+    # Hide all sidebar navigation if not authenticated
+    st.markdown(
+        """
+        <style>
+        [data-testid="stSidebarNav"] {
+            display: none
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    
 # ==================== FOOTER ====================
 st.markdown("---")
 st.markdown("<p style='text-align:center; color:#888;'>© 2025 ABC International School • Powered by Streamlit</p>", unsafe_allow_html=True)
