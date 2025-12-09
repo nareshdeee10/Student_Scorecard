@@ -4,7 +4,7 @@ import pandas as pd
 # ==================== PAGE CONFIG ====================
 st.set_page_config(
     page_title="ABC School • Results 2025",
-    page_icon="trophy",
+    page_icon="Trophy",
     layout="wide"
 )
 
