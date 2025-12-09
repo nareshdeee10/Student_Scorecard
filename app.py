@@ -32,6 +32,13 @@ USERS = {
     "user_a": {"password": "userpass", "role": "regular"},
 }
 
+# ==================== SIDEBAR ====================
+with st.sidebar:
+    st.image("https://img.icons8.com/fluency/96/trophy.png", width=100)
+    st.title("ABC International School")
+    st.markdown("### Academic Results 2024 - 2025")
+    st.info("Public dashboard + secure personal rank card")
+    
 # --- Initialization ---
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
